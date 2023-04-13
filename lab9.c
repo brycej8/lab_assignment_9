@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 // RecordType
 struct RecordType
@@ -6,18 +7,20 @@ struct RecordType
 	int		id;
 	char	name;
 	int		order; 
+	struct RecordType *next;
 };
 
 // Fill out this structure
 struct HashType
 {
-
+	struct RecordType *record;
+	int size;
 };
 
 // Compute the hash function
-int hash(int x)
+int hash(int x, int size)
 {
-
+	return (x % size);
 }
 
 // parses input file to an integer array
@@ -57,6 +60,24 @@ int parseData(char* inputFileName, struct RecordType** ppData)
 	return dataSz;
 }
 
+void insertRecord(struct HashType* hashrecord, struct RecordType* record, int recordSize) {
+    int index = hash(record->id, recordSize);
+    if (hashrecord[index].record == NULL) {
+        hashrecord[index].record = record;
+		hashrecord[index].record ->next = NULL;
+    }
+
+    else {
+
+		struct RecordType *temp = hashrecord[index].record;
+        while (temp->next != NULL) {
+            temp = temp->next;
+        }
+		temp->next = record;
+        temp->next->next = NULL;
+    }
+}
+
 // prints the records
 void printRecords(struct RecordType pData[], int dataSz)
 {
@@ -77,10 +98,22 @@ void displayRecordsInHash(struct HashType *pHashArray, int hashSz)
 {
 	int i;
 
-	for (i=0;i<hashSz;++i)
+	for (i=0; i<hashSz; i++)
 	{
 		// if index is occupied with any records, print all
+		if((pHashArray + i)->record != NULL){
+			struct RecordType *temp = (pHashArray + i)->record;
+			printf("\nIndex %d", i + 1);
+
+			while(temp != NULL){
+				printf(" -> %d, %c, %d", temp->id, temp->name, temp->order);
+				temp = temp->next;
+
+			}
+			printf(" -> NULL");
+		}
 	}
+	printf("\n");
 }
 
 int main(void)
@@ -90,5 +123,21 @@ int main(void)
 
 	recordSz = parseData("input.txt", &pRecords);
 	printRecords(pRecords, recordSz);
-	// Your hash implementation
+
+	int size = 11;
+
+	struct HashType *pHashArray = malloc(size * sizeof(struct HashType));
+
+	for(int i = 0; i<size; i++){
+		pHashArray[i].record = NULL;
+	}
+
+	for(int i = 0; i<recordSz; i++){
+		insertRecord(pHashArray, pRecords + i, size);
+	}
+	displayRecordsInHash(pHashArray, size);
+	free(pHashArray);
+	free(pRecords);
+
+	return 0;
 }
